@@ -42,7 +42,7 @@ public class ProductService {
         return products;
     }
 
-    public Product getProductForId(Long id){
+    public Product getProductById(Long id){
         for (Product product : products) {
             if (product.getId() == id) {
                 return product;

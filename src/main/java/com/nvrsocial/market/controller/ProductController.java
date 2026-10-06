@@ -2,7 +2,6 @@ package com.nvrsocial.market.controller;
 
 import com.nvrsocial.market.entity.Product;
 import com.nvrsocial.market.service.ProductService;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,6 +25,6 @@ public class ProductController {
 
     @GetMapping("/{id}")
     public Product getProduct(@PathVariable Long id) {
-        return productService.getProductForId(id);
+        return productService.getProductById(id);
     }
 }
