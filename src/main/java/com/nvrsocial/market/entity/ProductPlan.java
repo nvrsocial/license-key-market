@@ -1,5 +1,6 @@
 package com.nvrsocial.market.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.nvrsocial.market.entity.enums.ProductPeriod;
 import lombok.Getter;
 import lombok.Setter;
@@ -11,7 +12,10 @@ import java.math.BigDecimal;
 
 public class ProductPlan {
     private long id;
+
+    @JsonIgnore
     private Product product;
+
     private ProductPeriod productPeriod;
     private BigDecimal price;
 
