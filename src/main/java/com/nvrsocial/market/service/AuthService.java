@@ -2,14 +2,17 @@ package com.nvrsocial.market.service;
 
 import com.nvrsocial.market.entity.User;
 import com.nvrsocial.market.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 public class AuthService {
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public AuthService(UserRepository userRepository) {
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public User register(User user) {
@@ -28,28 +31,10 @@ public class AuthService {
 
         newUser.setUsername(user.getUsername());
         newUser.setEmail(user.getEmail());
-        newUser.setPassword(user.getPassword());
+        newUser.setPassword(passwordEncoder.encode(user.getPassword()));
 
         userRepository.save(newUser);
 
         return newUser;
-    }
-
-    public User login(String username, String password) {
-        if (username == null ||username.isEmpty()) {
-            throw new RuntimeException("Username is empty");
-        }
-        if (password == null || password.isEmpty()) {
-            throw new RuntimeException("Password is empty");
-        }
-
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not exists"));
-
-        if (user.getPassword().equals(password)) {
-            return user;
-        } else {
-            throw new RuntimeException("Password incorrect");
-        }
     }
 }

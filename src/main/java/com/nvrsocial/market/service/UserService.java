@@ -27,7 +27,6 @@ public class UserService {
         User updateUser = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         updateUser.setUsername(user.getUsername());
-        updateUser.setPassword(user.getPassword());
         updateUser.setEmail(user.getEmail());
 
         return userRepository.save(updateUser);
