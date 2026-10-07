@@ -42,6 +42,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/csrf", "/error").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products", "/api/products/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/subscriptions/buy/**").authenticated()
                         .requestMatchers("/api/me").authenticated()
                         .anyRequest().denyAll())
                 .formLogin(form -> form
