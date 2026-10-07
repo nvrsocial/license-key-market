@@ -1,12 +1,14 @@
 package com.nvrsocial.market.controller;
 
-import com.nvrsocial.market.entity.Product;
+import com.nvrsocial.market.dto.request.ProductRequest;
+import com.nvrsocial.market.dto.response.ProductResponse;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import com.nvrsocial.market.service.ProductService;
-import jakarta.persistence.Id;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/products")
@@ -18,26 +20,29 @@ public class ProductController {
     }
 
     @GetMapping()
-    public List<Product> allProducts(){
+    public List<ProductResponse> allProducts(){
        return productService.getAllProducts();
     }
 
     @GetMapping("/{id}")
-    public Optional<Product> getProduct(@PathVariable Long id) {
-        return productService.getProductById(id);
+    public ProductResponse getProduct(@PathVariable Long id) {
+        return productService.getProductById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found"));
     }
 
     @PostMapping()
-    public Product createProduct(@RequestBody Product product) {
+    @ResponseStatus(HttpStatus.CREATED)
+    public ProductResponse createProduct(@Valid @RequestBody ProductRequest product) {
         return productService.createProduct(product);
     }
 
     @PutMapping("/{id}")
-    public Product updateProduct(@PathVariable Long id, @RequestBody Product product) {
+    public ProductResponse updateProduct(@PathVariable Long id, @Valid @RequestBody ProductRequest product) {
         return productService.updateProduct(id, product);
     }
 
     @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
     }

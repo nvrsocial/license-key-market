@@ -1,18 +1,30 @@
 package com.nvrsocial.market.config;
 
+import com.nvrsocial.market.dto.response.UserResponse;
+import com.nvrsocial.market.exception.RestAuthenticationFailureHandler;
 import com.nvrsocial.market.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import tools.jackson.databind.ObjectMapper;
 
 @Configuration
 public class SecurityConfig {
+    private final ObjectMapper objectMapper;
+    private final UserRepository userRepository;
+    private final RestAuthenticationFailureHandler restAuthenticationFailureHandler;
+
+    public SecurityConfig(ObjectMapper objectMapper, UserRepository userRepository, RestAuthenticationFailureHandler restAuthenticationFailureHandler) {
+        this.objectMapper = objectMapper;
+        this.userRepository = userRepository;
+        this.restAuthenticationFailureHandler = restAuthenticationFailureHandler;
+    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -22,9 +34,7 @@ public class SecurityConfig {
     @Bean
     public UserDetailsService userDetailsService(UserRepository userRepository) {
         return username -> {
-            var user = userRepository.findByUsername(username)
-                    .orElseThrow(() ->
-                            new UsernameNotFoundException("User not found"));
+            var user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
             return org.springframework.security.core.userdetails.User
                     .withUsername(user.getUsername())
@@ -38,25 +48,21 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http)
             throws Exception {
 
-        http.authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/csrf", "/error").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/products", "/api/products/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/subscriptions/buy/**").authenticated()
-                        .requestMatchers("/api/me").authenticated()
-                        .anyRequest().denyAll())
-                .formLogin(form -> form
-                        .loginProcessingUrl("/api/auth/login")
-                        .successHandler((request, response, authentication) -> response.setStatus(200))
-                        .failureHandler((request, response, exception) -> response.setStatus(401))
+        http.csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+                .formLogin(form -> form.loginProcessingUrl("/api/auth/login")
+                        .successHandler((request, response, authentication) -> {
+                            var user = userRepository.findByUsername(authentication.getName()).orElseThrow();
+                            response.setStatus(200);
+                            response.setContentType("application/json");
+                            objectMapper.writeValue(response.getOutputStream(), new UserResponse(user.getId(), user.getUsername(), user.getEmail()));
+                        })
+                        .failureHandler(restAuthenticationFailureHandler)
                         .permitAll())
                 .logout(logout -> logout.logoutUrl("/api/auth/logout")
                         .logoutSuccessHandler((request, response, authentication) -> response.setStatus(204))
                         .permitAll()
-                )
-                .exceptionHandling(errors -> errors
-                        .authenticationEntryPoint((request, response, exception) -> response.setStatus(401))
-                        .accessDeniedHandler((request, response, exception) -> response.setStatus(403)));
+                );
 
         return http.build();
     }

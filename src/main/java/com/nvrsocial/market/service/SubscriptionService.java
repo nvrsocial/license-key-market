@@ -1,5 +1,13 @@
 package com.nvrsocial.market.service;
 
+import com.nvrsocial.market.dto.request.PurchaseRequest;
+import com.nvrsocial.market.dto.response.SubscriptionResponse;
+import com.nvrsocial.market.dto.response.ProductPlanResponse;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.LockModeType;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import com.nvrsocial.market.component.KeyGenerator;
 import com.nvrsocial.market.entity.*;
 import com.nvrsocial.market.repository.ProductKeyRepository;
@@ -20,6 +28,9 @@ public class SubscriptionService {
 
     private final KeyGenerator keyGenerator;
 
+    @PersistenceContext
+    private EntityManager entityManager;
+
     public SubscriptionService(UserRepository userRepository, ProductPlanRepository productPlanRepository,
                                SubscriptionRepository subscriptionRepository, ProductKeyRepository productKeyRepository, KeyGenerator keyGenerator) {
         this.userRepository = userRepository;
@@ -30,9 +41,11 @@ public class SubscriptionService {
     }
 
     @Transactional
-    public void buy(String username, Long planId) {
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("User not found"));
-        ProductPlan productPlan = productPlanRepository.findById(planId).orElseThrow(() -> new RuntimeException("ProductPlan not found"));
+    public SubscriptionResponse buy(PurchaseRequest purchase) {
+        User user = userRepository.findById(purchase.getUserId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        entityManager.lock(user, LockModeType.PESSIMISTIC_WRITE);
+        ProductPlan productPlan = productPlanRepository.findById(purchase.getPlanId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "ProductPlan not found"));
 
         Product product = productPlan.getProduct();
 
@@ -45,7 +58,7 @@ public class SubscriptionService {
             int newLvl = productPlan.getProductPeriod().getLvl();
 
             if (newLvl <= currentLvl) {
-                throw new IllegalStateException("You cannot purchase the same or a lower active plan");
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "You cannot purchase the same or a lower active plan");
             }
         }
 
@@ -78,5 +91,10 @@ public class SubscriptionService {
         }
 
         productKeyRepository.save(productKey);
+
+        ProductPlanResponse planResponse = new ProductPlanResponse(productPlan.getId(), productPlan.getProductPeriod(), productPlan.getPrice());
+        return new SubscriptionResponse(savedSubscription.getId(), user.getId(), product.getId(),
+                product.getName(), planResponse, savedSubscription.getStartAt(), savedSubscription.getExpireAt(),
+                savedSubscription.getExpireAt().isAfter(LocalDateTime.now()), productKey.getKey());
     }
 }

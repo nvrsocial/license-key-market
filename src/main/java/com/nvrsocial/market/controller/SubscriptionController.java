@@ -1,10 +1,10 @@
 package com.nvrsocial.market.controller;
 
 import com.nvrsocial.market.service.SubscriptionService;
-import org.springframework.http.HttpStatus;
+import com.nvrsocial.market.dto.request.PurchaseRequest;
+import com.nvrsocial.market.dto.response.SubscriptionResponse;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
-
-import java.security.Principal;
 
 @RestController
 @RequestMapping("/api/subscriptions")
@@ -16,9 +16,8 @@ public class SubscriptionController {
         this.subscriptionService = subscriptionService;
     }
 
-    @PostMapping("/buy/{planId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void buy(@PathVariable Long planId, Principal principal) {
-        subscriptionService.buy(principal.getName(), planId);
+    @PostMapping("/buy")
+    public SubscriptionResponse buy(@Valid @RequestBody PurchaseRequest purchase) {
+        return subscriptionService.buy(purchase);
     }
 }

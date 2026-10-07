@@ -1,12 +1,14 @@
 package com.nvrsocial.market.controller;
 
-import com.nvrsocial.market.entity.User;
-import com.nvrsocial.market.repository.UserRepository;
+import com.nvrsocial.market.dto.request.UserUpdateRequest;
+import com.nvrsocial.market.dto.response.UserResponse;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import com.nvrsocial.market.service.UserService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/users")
@@ -18,21 +20,22 @@ public class UserController {
     }
 
     @GetMapping
-    public List<User> getAllUsers(){
+    public List<UserResponse> getAllUsers(){
         return userService.getAllUsers();
     }
 
     @GetMapping("/{id}")
-    public Optional<User> getUserById(@PathVariable Long id) {
-        return userService.getUserById(id);
+    public UserResponse getUserById(@PathVariable Long id) {
+        return userService.getUserById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
     }
 
     @PutMapping("/{id}")
-    public User changeUser(@PathVariable Long id, @RequestBody User user) {
+    public UserResponse changeUser(@PathVariable Long id, @Valid @RequestBody UserUpdateRequest user) {
         return userService.changeUser(id, user);
     }
 
     @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
     }

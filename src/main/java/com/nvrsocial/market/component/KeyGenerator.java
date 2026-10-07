@@ -6,7 +6,7 @@ import java.security.SecureRandom;
 
 @Component
 public class KeyGenerator {
-    public static String keyGeneration() {
+    public String keyGeneration() {
         String key = "xxxxxx-xxxxxx-xxxxxx-xxxxxx-xxxxxx-xxxxxx";
 
         SecureRandom random = new SecureRandom();
