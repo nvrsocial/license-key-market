@@ -2,53 +2,58 @@ package com.nvrsocial.market.service;
 
 import com.nvrsocial.market.entity.Product;
 import com.nvrsocial.market.entity.ProductPlan;
-import com.nvrsocial.market.entity.enums.ProductPeriod;
+import com.nvrsocial.market.repository.ProductRepository;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ProductService {
-    private List<Product> products = new ArrayList<>();
-    private List<ProductPlan> productPlans = new ArrayList<>();
 
-    public ProductService() {
-        Product product = new Product(
-                1L, "Amnesia", "Mod for Minecraft", productPlans
-        );
+    private final ProductRepository productRepository;
 
-        ProductPlan weekPlan = new ProductPlan(
-                1L, product, ProductPeriod.ONE_WEEK, new BigDecimal("4.99")
-        );
-
-        ProductPlan monthPlan = new ProductPlan(
-                2L, product, ProductPeriod.ONE_MONTH, new BigDecimal("9.99")
-        );
-
-        ProductPlan threeMonthsPlan = new ProductPlan(
-                3L, product, ProductPeriod.THREE_MONTHS, new BigDecimal("19.99")
-        );
-
-        products.add(product);
-
-        productPlans.add(weekPlan);
-        productPlans.add(monthPlan);
-        productPlans.add(threeMonthsPlan);
+    public ProductService(ProductRepository productRepository) {
+        this.productRepository = productRepository;
     }
 
-    public List<Product> getAllProduct(){
-        return products;
+    public List<Product> getAllProducts(){
+        return productRepository.findAll();
     }
 
-    public Product getProductById(Long id){
-        for (Product product : products) {
-            if (product.getId() == id) {
-                return product;
+    public Optional<Product> getProductById(Long id) {
+        return productRepository.findById(id);
+    }
+
+    public Product createProduct(Product newProduct) {
+        Product product = new Product();
+
+        product.setName(newProduct.getName());
+        product.setDescription(newProduct.getDescription());
+
+        if (newProduct.getProductPlans() != null) {
+            for (ProductPlan plan : newProduct.getProductPlans()) {
+                plan.setProduct(product);
+                product.getProductPlans().add(plan);
             }
         }
 
-        return null;
+        return productRepository.save(product);
+    }
+
+    public Product updateProduct(Long id, Product product) {
+        Product updateProduct = productRepository.findById(id).
+                orElseThrow(() -> new RuntimeException("Product not found"));
+
+        updateProduct.setName(product.getName());
+        updateProduct.setDescription(product.getDescription());
+        updateProduct.setProductPlans(product.getProductPlans());
+
+        return productRepository.save(updateProduct);
+
+    }
+
+    public void deleteProduct(Long id) {
+        productRepository.deleteById(id);
     }
 }
