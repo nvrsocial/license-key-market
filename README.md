@@ -57,30 +57,6 @@ flowchart LR
     Exception[Global Exception Handler] --> Client
 ```
 
-Main package structure:
-
-```text
-src/main/java/com/nvrsocial/market
-├── component
-│   └── KeyGenerator
-├── config
-│   └── SecurityConfig
-├── controller
-│   ├── AuthController
-│   ├── ProductController
-│   ├── ProfileController
-│   ├── SubscriptionController
-│   └── UserController
-├── dto
-│   ├── request
-│   └── response
-├── entity
-│   └── enums
-├── exception
-├── repository
-└── service
-```
-
 ## Domain Model
 
 The main domain entities are:
